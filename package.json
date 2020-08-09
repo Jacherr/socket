@@ -1,0 +1,25 @@
+{
+  "name": "utils",
+  "version": "1.0.0",
+  "description": "some utils i use in projects i make",
+  "dependencies": {
+    "@types/ws": "^7.2.6",
+    "ws": "^7.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^14.0.27"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jacherr/utils.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Jacherr/utils/issues"
+  },
+  "homepage": "https://github.com/Jacherr/utils#readme"
+}
