@@ -2,12 +2,16 @@ import { EventEmitter } from 'events';
 import WebSocket, { ClientOptions, Data } from 'ws';
 
 import { SocketEvents, OpCodes } from './constants'
-import { time } from 'console';
 
 export interface SocketOptions extends ClientOptions {
     autoReconnect?: boolean
-    heartbeat?: number
+    heartbeat?: HeartbeatOptions
     pongData?: any
+}
+
+export interface HeartbeatOptions {
+    interval: number
+    data: any
 }
 
 export interface Socket {
@@ -20,9 +24,12 @@ export interface Socket {
 
 export class Socket extends EventEmitter {
 
+    private newHeartbeatIntervalTime?: number
     private pong?: Function
 
     public autoReconnect: boolean
+    public heartbeatInterval?: NodeJS.Timeout
+    public heartbeatOptions?: HeartbeatOptions
     public options: SocketOptions
     public socket: WebSocket | null = null
     public url: string | null = null
@@ -30,7 +37,12 @@ export class Socket extends EventEmitter {
     constructor(options: SocketOptions = {}) {
         super();
         this.autoReconnect = options.autoReconnect ?? true;
+        this.heartbeatOptions = options.heartbeat;
         this.options = options;
+    }
+
+    set heartbeatIntervalTime(value: number) {
+        this.newHeartbeatIntervalTime = value;
     }
 
     get state() {
@@ -53,6 +65,10 @@ export class Socket extends EventEmitter {
 
             this.socket.on(SocketEvents.OPEN, cb);
             this.initListeners();
+
+            if(this.heartbeatOptions) {
+                this.setHeartbeatInterval(this.heartbeatOptions.interval)
+            }
         })
     }
 
@@ -75,6 +91,7 @@ export class Socket extends EventEmitter {
 
     public onClose(code: number, reason: string): void | Promise<void> {
         this.removeAllListeners();
+        if(this.heartbeatInterval) clearInterval(this.heartbeatInterval);
         if (this.autoReconnect) this.connect(this.url as string);
     }
 
@@ -125,5 +142,15 @@ export class Socket extends EventEmitter {
                 resolve();
             })
         })
+    }
+
+    private setHeartbeatInterval(interval: number) {
+        this.heartbeatInterval = setInterval(() => {
+            this.ping(this.heartbeatOptions?.data);
+            if(this.newHeartbeatIntervalTime) {
+                clearInterval(this.heartbeatInterval as NodeJS.Timeout);
+                this.setHeartbeatInterval(this.newHeartbeatIntervalTime);
+            }
+        }, interval);
     }
 }
